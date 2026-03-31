@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flag of the Day</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 0 20px;
+      background: #fff;
+      color: #111;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    #count {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      outline: none;
+      margin-bottom: 24px;
+      box-sizing: border-box;
+    }
+
+    input:focus { border-color: #111; }
+
+    .row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .row.hidden { display: none; }
+
+    .day {
+      color: #aaa;
+      font-size: 12px;
+      min-width: 48px;
+    }
+
+    .row a {
+      color: #111;
+      font-size: 15px;
+    }
+
+    .row a:hover { color: #0066cc; }
+
+    .alt {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .alt a { color: #888; font-size: 12px; }
+    .alt a:hover { color: #0066cc; }
+  </style>
+</head>
+<body>
+  <h1>Flag of the Day</h1>
+  <div id="count"></div>
+  <input type="text" id="search" placeholder="Search…" autocomplete="off"/>
+  <div id="list"></div>
+
+  <script>
+    (async () => {
+      const res = await fetch('FOTD.html');
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = [...doc.querySelectorAll('tr')];
+      const list = document.getElementById('list');
+      let count = 0;
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (!cells.length) return;
+        const dayText = cells[0].textContent.trim();
+        if (!dayText.match(/^Day \d+$/i)) return;
+
+        const mainLink = cells[1]?.querySelector('a');
+        if (!mainLink) return;
+
+        const altLink = cells[2]?.querySelector('a');
+
+        const div = document.createElement('div');
+        div.className = 'row';
+        div.dataset.name = mainLink.textContent.toLowerCase();
+        div.dataset.day = dayText.toLowerCase();
+
+        div.innerHTML = `
+          <span class="day">${dayText.replace('Day ', '#')}</span>
+          <a href="${mainLink.href}" target="_blank">${mainLink.textContent}</a>
+          ${altLink ? `<span class="alt">— <a href="${altLink.href}" target="_blank">alt</a></span>` : ''}
+        `;
+
+        list.appendChild(div);
+        count++;
+      });
+
+      document.getElementById('count').textContent = `${count} flags`;
+
+      document.getElementById('search').addEventListener('input', e => {
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('.row').forEach(row => {
+          row.classList.toggle('hidden', q && !row.dataset.name.includes(q) && !row.dataset.day.includes(q));
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
